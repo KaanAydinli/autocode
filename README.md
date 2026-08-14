@@ -1,4 +1,10 @@
-<h1 align="center">autocode</h1>
+<p align="center">
+  <picture>
+    <source srcset="assets/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="assets/logo-light.svg" media="(prefers-color-scheme: light)">
+    <img src="assets/logo-dark.svg" alt="autocode" width="480">
+  </picture>
+</p>
 <p align="center">The open source AI coding agent with an autonomous permission-review mode.</p>
 <p align="center">Maintained by <a href="https://github.com/KaanAydinli">Kaan Aydınlı</a></p>
 
