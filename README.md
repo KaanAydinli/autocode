@@ -1,18 +1,6 @@
-<p align="center">
-  <a href="https://opencode.ai">
-    <picture>
-      <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="OpenCode logo">
-    </picture>
-  </a>
-</p>
-<p align="center">The open source AI coding agent.</p>
-<p align="center">
-  <a href="https://opencode.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
-  <a href="https://www.npmjs.com/package/opencode-ai"><img alt="npm" src="https://img.shields.io/npm/v/opencode-ai?style=flat-square" /></a>
-  <a href="https://github.com/anomalyco/opencode/actions/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/publish.yml?style=flat-square&branch=dev" /></a>
-</p>
+<h1 align="center">autocode</h1>
+<p align="center">The open source AI coding agent — a community fork of <a href="https://opencode.ai">OpenCode</a> with an autonomous permission-review mode.</p>
+<p align="center">Maintained by <a href="https://github.com/KaanAydinli">Kaan Aydınlı</a></p>
 
 <p align="center">
   <a href="README.md">English</a> |
@@ -39,73 +27,53 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
-[![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
-
 ---
+
+### What autocode adds
+
+- **Auto agent** — a third primary agent alongside Build and Plan. Instead of prompting you, permission requests are judged by an automated LLM risk reviewer that weighs the action's risk against what you actually asked for, and approves or denies on your behalf. Denials are fed back to the agent with an explanation; repeated denials trip a circuit breaker that hands control back to you.
+- **`/rmodel`** — pick the model that powers the reviewer (defaults to Nemotron 3.5 Lightning Free, falls back to your chat model). The choice is remembered in your config as `reviewer_model`.
+- Start it with `autocode --auto`, `autocode run --agent auto`, or cycle to the Auto agent with `Tab` in the TUI.
 
 ### Installation
 
-```bash
-# YOLO
-curl -fsSL https://opencode.ai/install | bash
-
-# Package managers
-npm i -g opencode-ai@latest        # or bun/pnpm/yarn
-scoop install opencode             # Windows
-choco install opencode             # Windows
-brew install anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
-brew install opencode              # macOS and Linux (official brew formula, updated less)
-sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-bin               # Arch Linux (Latest from AUR)
-mise use -g opencode               # Any OS
-nix run nixpkgs#opencode           # or github:anomalyco/opencode for latest dev branch
-```
-
-> [!TIP]
-> Remove versions older than 0.1.x before installing.
-
-### Desktop App (BETA)
-
-OpenCode is also available as a desktop application. Download directly from the [releases page](https://github.com/anomalyco/opencode/releases) or [opencode.ai/download](https://opencode.ai/download).
-
-| Platform              | Download                           |
-| --------------------- | ---------------------------------- |
-| macOS (Apple Silicon) | `opencode-desktop-mac-arm64.dmg`   |
-| macOS (Intel)         | `opencode-desktop-mac-x64.dmg`     |
-| Windows               | `opencode-desktop-windows-x64.exe` |
-| Linux                 | `.deb`, `.rpm`, or `.AppImage`     |
+autocode is installed from source:
 
 ```bash
-# macOS (Homebrew)
-brew install --cask opencode-desktop
-# Windows (Scoop)
-scoop bucket add extras; scoop install extras/opencode-desktop
+git clone https://github.com/KaanAydinli/autocode.git
+cd autocode
+bun install
+
+# build a native binary for your platform
+cd packages/opencode
+bun run script/build.ts --single
+
+# install (adjust the target dir to somewhere on your PATH)
+cp dist/opencode-linux-x64/bin/opencode ~/.local/bin/autocode
 ```
 
-#### Installation Directory
-
-The install script respects the following priority order for the installation path:
-
-1. `$OPENCODE_INSTALL_DIR` - Custom installation directory
-2. `$XDG_BIN_DIR` - XDG Base Directory Specification compliant path
-3. `$HOME/bin` - Standard user binary directory (if it exists or can be created)
-4. `$HOME/.opencode/bin` - Default fallback
+Or run straight from source during development:
 
 ```bash
-# Examples
-OPENCODE_INSTALL_DIR=/usr/local/bin curl -fsSL https://opencode.ai/install | bash
-XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/install | bash
+bun dev            # TUI
+bun dev serve      # headless server
 ```
+
+> [!NOTE]
+> The upstream installers (`curl opencode.ai/install`, `npm i -g opencode-ai`, brew, scoop, …) install the original OpenCode, not this fork.
 
 ### Agents
 
-OpenCode includes two built-in agents you can switch between with the `Tab` key.
+autocode includes three built-in agents you can switch between with the `Tab` key.
 
 - **build** - Default, full-access agent for development work
 - **plan** - Read-only agent for analysis and code exploration
   - Denies file edits by default
   - Asks permission before running bash commands
   - Ideal for exploring unfamiliar codebases or planning changes
+- **auto** - Autonomous agent for hands-off work
+  - Permission requests are approved or denied by an automated risk reviewer instead of prompting you
+  - You can still override any decision while it is being reviewed
 
 Also included is a **general** subagent for complex searches and multistep tasks.
 This is used internally and can be invoked using `@general` in messages.
@@ -114,16 +82,17 @@ Learn more about [agents](https://opencode.ai/docs/agents).
 
 ### Documentation
 
-For more info on how to configure OpenCode, [**head over to our docs**](https://opencode.ai/docs).
+autocode keeps full compatibility with OpenCode's configuration and features. For everything else — config, providers, keybinds, MCP servers — [**head over to the OpenCode docs**](https://opencode.ai/docs).
 
 ### Contributing
 
-If you're interested in contributing to OpenCode, please read our [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
+If you're interested in contributing, please read the [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
 
-### Building on OpenCode
+### Credits
 
-If you are working on a project that's related to OpenCode and is using "opencode" as part of its name, for example "opencode-dashboard" or "opencode-mobile", please add a note to your README to clarify that it is not built by the OpenCode team and is not affiliated with us in any way.
+Built on top of [OpenCode](https://github.com/anomalyco/opencode) by Anomaly. Fork modifications by [Kaan Aydınlı](https://github.com/KaanAydinli).
 
 ---
 
-**Join our community** [Discord](https://discord.gg/opencode) | [X.com](https://x.com/opencode)
+> [!IMPORTANT]
+> **This is not developed by the OpenCode team (Anomaly / anomalyco).** autocode is an independent community fork and is not affiliated with, endorsed by, or supported by the OpenCode project.
