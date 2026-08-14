@@ -241,7 +241,7 @@ export const RunCommand = effectCmd({
       })
       .option("auto", {
         type: "boolean",
-        describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
+        describe: "run with the auto agent: permission requests are reviewed by an automated model-based risk reviewer",
         default: false,
       })
       .option("yolo", {
@@ -272,6 +272,7 @@ export const RunCommand = effectCmd({
       const rawMessage = [...args.message, ...(args["--"] || [])].join(" ")
       const interactive = args.mini
       const auto = args.auto || args.yolo || args["dangerously-skip-permissions"]
+      if (auto && !args.agent) args.agent = "auto"
       const thinking = interactive ? (args.thinking ?? true) : (args.thinking ?? false)
       const die = (message: string): never => {
         UI.error(message)
@@ -797,12 +798,8 @@ export const RunCommand = effectCmd({
               const permission = event.properties
               if (permission.sessionID !== sessionID) continue
 
-              if (auto) {
-                await client.permission.reply({
-                  requestID: permission.id,
-                  reply: "once",
-                })
-              } else {
+              // Requests from the auto agent are settled by the guardian reviewer server-side.
+              if (!auto && permission.agent !== "auto") {
                 UI.println(
                   UI.Style.TEXT_WARNING_BOLD + "!",
                   UI.Style.TEXT_NORMAL +

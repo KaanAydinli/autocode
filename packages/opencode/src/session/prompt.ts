@@ -343,6 +343,7 @@ const layer = Layer.effect(
               .ask({
                 ...req,
                 sessionID,
+                agent: taskAgent.name,
                 ruleset: Permission.merge(taskAgent.permission, session.permission ?? []),
               })
               .pipe(Effect.orDie),

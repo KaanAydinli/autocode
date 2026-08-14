@@ -153,6 +153,22 @@ const layer = Layer.effect(
             mode: "primary",
             native: true,
           },
+          auto: {
+            name: "auto",
+            description:
+              "Auto mode. Permission requests are approved or denied by an automated risk reviewer using the chat model instead of prompting the user.",
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                question: "allow",
+                plan_enter: "allow",
+              }),
+              user,
+            ),
+            mode: "primary",
+            native: true,
+          },
           plan: {
             name: "plan",
             description: "Plan mode. Disallows all edit tools.",

@@ -107,7 +107,7 @@ export const TuiThreadCommand = cmd({
       })
       .option("auto", {
         type: "boolean",
-        describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
+        describe: "start with the auto agent: permission requests are reviewed by an automated model-based risk reviewer",
         default: false,
       })
       .option("yolo", {
@@ -287,11 +287,10 @@ export const TuiThreadCommand = cmd({
             args: {
               continue: args.continue,
               sessionID: args.session,
-              agent: args.agent,
+              agent: args.agent ?? (args.auto || args.yolo || args["dangerously-skip-permissions"] ? "auto" : undefined),
               model: args.model,
               prompt,
               fork: args.fork,
-              auto: args.auto || args.yolo || args["dangerously-skip-permissions"],
             },
           }),
         )

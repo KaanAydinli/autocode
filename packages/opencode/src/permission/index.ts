@@ -12,6 +12,7 @@ export const Event = PermissionV1.Event
 export interface Interface {
   readonly ask: (input: PermissionV1.AskInput) => Effect.Effect<void, PermissionV1.Error>
   readonly reply: (input: PermissionV1.ReplyInput) => Effect.Effect<void, PermissionV1.NotFoundError>
+  readonly replyOne: (input: PermissionV1.ReplyInput) => Effect.Effect<void, PermissionV1.NotFoundError>
   readonly list: () => Effect.Effect<ReadonlyArray<PermissionV1.Request>>
 }
 
@@ -92,6 +93,7 @@ const layer = Layer.effect(
         metadata: request.metadata,
         always: request.always,
         tool: request.tool,
+        agent: request.agent,
       }
       yield* Effect.logInfo("asking", { id, permission: info.permission, patterns: info.patterns })
 
@@ -166,12 +168,39 @@ const layer = Layer.effect(
       }
     })
 
+    // Resolves a single request without the reject cascade `reply` applies to the
+    // whole session. Used by the guardian auto-reviewer, which judges one action
+    // at a time and must not sweep away unrelated pending requests.
+    const replyOne = Effect.fn("Permission.replyOne")(function* (input: PermissionV1.ReplyInput) {
+      const { pending } = yield* InstanceState.get(state)
+      const existing = pending.get(input.requestID)
+      if (!existing) return yield* new PermissionV1.NotFoundError({ requestID: input.requestID })
+
+      pending.delete(input.requestID)
+      yield* events.publish(Event.Replied, {
+        sessionID: existing.info.sessionID,
+        requestID: existing.info.id,
+        reply: input.reply,
+      })
+
+      if (input.reply === "reject") {
+        return yield* Deferred.fail(
+          existing.deferred,
+          input.message
+            ? new PermissionV1.CorrectedError({ feedback: input.message })
+            : new PermissionV1.RejectedError(),
+        )
+      }
+
+      yield* Deferred.succeed(existing.deferred, undefined)
+    })
+
     const list = Effect.fn("Permission.list")(function* () {
       const pending = (yield* InstanceState.get(state)).pending
       return Array.from(pending.values(), (item) => item.info)
     })
 
-    return Service.of({ ask, reply, list })
+    return Service.of({ ask, reply, replyOne, list })
   }),
 )
 

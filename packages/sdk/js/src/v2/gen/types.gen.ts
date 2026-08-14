@@ -1389,6 +1389,7 @@ export type GlobalEvent = {
             messageID: string
             callID: string
           }
+          agent?: string
         }
       }
     | {
@@ -2478,6 +2479,7 @@ export type PermissionRequest = {
     messageID: string
     callID: string
   }
+  agent?: string
 }
 
 export type PermissionNotFoundError = {
@@ -5718,6 +5720,7 @@ export type PermissionAsked = {
       messageID: string
       callID: string
     }
+    agent?: string
   }
 }
 
@@ -6872,6 +6875,7 @@ export type EventPermissionAsked = {
       messageID: string
       callID: string
     }
+    agent?: string
   }
 }
 

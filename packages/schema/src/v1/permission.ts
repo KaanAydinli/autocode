@@ -32,6 +32,7 @@ export const Request = Schema.Struct({
   metadata: Schema.Record(Schema.String, Schema.Unknown),
   always: Schema.Array(Schema.String),
   tool: Schema.optional(Schema.Struct({ messageID: Schema.String, callID: Schema.String })),
+  agent: Schema.optional(Schema.String),
 }).annotate({ identifier: "PermissionRequest" })
 export type Request = typeof Request.Type
 

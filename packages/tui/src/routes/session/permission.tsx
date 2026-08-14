@@ -388,6 +388,14 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
                 <text fg={theme.warning}>{"△"}</text>
                 <text fg={theme.text}>Permission required</text>
               </box>
+              <Show when={props.request.agent === "auto"}>
+                <box flexDirection="row" gap={1} paddingLeft={2} flexShrink={0}>
+                  <text fg={theme.info} flexShrink={0}>
+                    {"◍"}
+                  </text>
+                  <text fg={theme.textMuted}>Auto review in progress — choose an option to override</text>
+                </box>
+              </Show>
               <box flexDirection="row" gap={1} paddingLeft={2} flexShrink={0}>
                 <text fg={theme.textMuted} flexShrink={0}>
                   {current.icon}
