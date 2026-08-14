@@ -12,7 +12,7 @@ import { InstanceStore } from "@/project/instance-store"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { SessionID } from "@/session/schema"
 
-// Codex-style guardian auto-reviewer: sessions running the "auto" agent get their
+// Automated permission reviewer: sessions running the "auto" agent get their
 // permission requests judged by the session's chat model instead of prompting the user.
 export interface Interface {
   readonly agent: string

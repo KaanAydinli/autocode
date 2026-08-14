@@ -2,9 +2,8 @@ import { Schema } from "effect"
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
 
-// Ported from codex-rs/core/src/guardian: an LLM reviewer that judges one planned
-// coding-agent action instead of prompting the user. Token caps and prompt structure
-// mirror the codex implementation (chars ≈ tokens * 4).
+// An LLM reviewer that judges one planned coding-agent action instead of prompting
+// the user. Token caps are expressed in characters (chars ≈ tokens * 4).
 export const REVIEW_TIMEOUT_MS = 90_000
 export const MESSAGE_CHAR_CAP = 8_000
 export const TOOL_CHAR_CAP = 4_000
@@ -160,7 +159,7 @@ export function transcript(messages: readonly SessionV1.WithParts[]): string {
   const entries = messages.map((message) => ({ message, lines: renderEntry(message) })).filter((entry) => entry.lines.length > 0)
   if (entries.length === 0) return ""
   const userIndexes = entries.flatMap((entry, index) => (entry.message.info.role === "user" ? [index] : []))
-  // Anchor the first and latest user turns like codex, then fill newest-to-oldest.
+  // Anchor the first and latest user turns, then fill newest-to-oldest.
   const anchors = new Set([userIndexes.at(0), userIndexes.at(-1)].filter((index) => index !== undefined))
   const selected = new Set(anchors)
   let budget = TRANSCRIPT_CHAR_BUDGET

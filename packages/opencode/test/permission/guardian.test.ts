@@ -87,7 +87,7 @@ describe("Guardian.transcript", () => {
 })
 
 describe("Guardian.prompt", () => {
-  test("wraps transcript and planned action with codex-style markers", () => {
+  test("wraps transcript and planned action with review markers", () => {
     const built = Guardian.prompt({
       transcript: "message/user: run ls",
       action: Guardian.action({
