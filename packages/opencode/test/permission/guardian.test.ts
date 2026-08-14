@@ -159,6 +159,36 @@ describe("Guardian.parse", () => {
     expect(Guardian.parse("I cannot decide")).toBeUndefined()
     expect(Guardian.parse('{"outcome":"maybe"}')).toBeUndefined()
   })
+
+  test("ignores JSON inside think blocks", () => {
+    const result = Guardian.parse(
+      '<think>Maybe {"outcome":"deny"}? No, the action is safe.</think>\n{"outcome":"allow","risk_level":"low"}',
+    )
+    expect(result?.outcome).toBe("allow")
+  })
+
+  test("handles an unclosed leading think block", () => {
+    const result = Guardian.parse('<think>reasoning that never closes... {"outcome":"allow","rationale":"fine"}')
+    expect(result?.outcome).toBe("allow")
+  })
+
+  test("uses the last valid JSON object when several appear", () => {
+    const result = Guardian.parse(
+      'Example schema: {"outcome":"deny","rationale":"example"}\nFinal answer:\n{"outcome":"allow","risk_level":"medium"}',
+    )
+    expect(result?.outcome).toBe("allow")
+    expect(result?.risk_level).toBe("medium")
+  })
+
+  test("recovers from an unmatched opening brace before the answer", () => {
+    const result = Guardian.parse('The risk is bounded { roughly speaking.\n{"outcome":"allow","risk_level":"low"}')
+    expect(result?.outcome).toBe("allow")
+  })
+
+  test("skips brace noise in prose before the answer", () => {
+    const result = Guardian.parse('Given policy {see rules} and risk {high vs low}, verdict: {"outcome":"deny"}')
+    expect(result?.outcome).toBe("deny")
+  })
 })
 
 describe("Guardian.reviewerCandidates", () => {

@@ -219,20 +219,33 @@ ${input.action}
 }
 
 // The reviewer prompts for strict JSON instead of relying on provider-side structured
-// output, which not every provider behind the chat model supports. Extract the first
-// balanced JSON object and validate it; anything else fails closed upstream.
+// output, which not every provider behind the chat model supports. Reasoning models may
+// inline think blocks or JSON-shaped examples before the verdict, so closed think blocks
+// are dropped and the LAST balanced object that validates wins. Anything else fails
+// closed upstream.
 export function parse(text: string): Assessment | undefined {
-  const start = text.indexOf("{")
-  if (start === -1) return undefined
-  for (let index = start, depth = 0; index < text.length; index++) {
-    if (text[index] === "{") depth++
-    if (text[index] !== "}") continue
-    depth--
-    if (depth > 0) continue
-    const decoded = Schema.decodeUnknownOption(Schema.fromJsonString(Assessment))(text.slice(start, index + 1))
-    return decoded._tag === "Some" ? decoded.value : undefined
+  const visible = text.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/g, "")
+  const decode = Schema.decodeUnknownOption(Schema.fromJsonString(Assessment))
+  let result: Assessment | undefined
+  for (let start = visible.indexOf("{"); start !== -1; ) {
+    let end = -1
+    for (let index = start, depth = 0; index < visible.length; index++) {
+      if (visible[index] === "{") depth++
+      if (visible[index] !== "}") continue
+      depth--
+      if (depth > 0) continue
+      end = index
+      break
+    }
+    if (end === -1) {
+      start = visible.indexOf("{", start + 1)
+      continue
+    }
+    const decoded = decode(visible.slice(start, end + 1))
+    if (decoded._tag === "Some") result = decoded.value
+    start = visible.indexOf("{", (decoded._tag === "Some" ? end : start) + 1)
   }
-  return undefined
+  return result
 }
 
 export type ReviewResult =
