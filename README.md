@@ -1,43 +1,20 @@
 <h1 align="center">autocode</h1>
-<p align="center">The open source AI coding agent — a community fork of <a href="https://opencode.ai">OpenCode</a> with an autonomous permission-review mode.</p>
+<p align="center">The open source AI coding agent with an autonomous permission-review mode.</p>
 <p align="center">Maintained by <a href="https://github.com/KaanAydinli">Kaan Aydınlı</a></p>
-
-<p align="center">
-  <a href="README.md">English</a> |
-  <a href="README.zh.md">简体中文</a> |
-  <a href="README.zht.md">繁體中文</a> |
-  <a href="README.ko.md">한국어</a> |
-  <a href="README.de.md">Deutsch</a> |
-  <a href="README.es.md">Español</a> |
-  <a href="README.fr.md">Français</a> |
-  <a href="README.it.md">Italiano</a> |
-  <a href="README.da.md">Dansk</a> |
-  <a href="README.ja.md">日本語</a> |
-  <a href="README.pl.md">Polski</a> |
-  <a href="README.ru.md">Русский</a> |
-  <a href="README.bs.md">Bosanski</a> |
-  <a href="README.ar.md">العربية</a> |
-  <a href="README.no.md">Norsk</a> |
-  <a href="README.br.md">Português (Brasil)</a> |
-  <a href="README.th.md">ไทย</a> |
-  <a href="README.tr.md">Türkçe</a> |
-  <a href="README.uk.md">Українська</a> |
-  <a href="README.bn.md">বাংলা</a> |
-  <a href="README.gr.md">Ελληνικά</a> |
-  <a href="README.vi.md">Tiếng Việt</a>
-</p>
 
 ---
 
-### What autocode adds
+### Features
 
-- **Auto agent** — a third primary agent alongside Build and Plan. Instead of prompting you, permission requests are judged by an automated LLM risk reviewer that weighs the action's risk against what you actually asked for, and approves or denies on your behalf. Denials are fed back to the agent with an explanation; repeated denials trip a circuit breaker that hands control back to you.
-- **`/rmodel`** — pick the model that powers the reviewer (defaults to Nemotron 3.5 Lightning Free, falls back to your chat model). The choice is remembered in your config as `reviewer_model`.
-- Start it with `autocode --auto`, `autocode run --agent auto`, or cycle to the Auto agent with `Tab` in the TUI.
+- **Terminal-first coding agent** — a fast TUI you drive with plain language: edit code, run commands, explore codebases, ship features.
+- **Auto agent** — hands-off mode. Permission requests are approved or denied by an automated LLM risk reviewer that weighs each action's risk against what you actually asked for, instead of interrupting you. Denials are explained back to the agent; repeated denials trip a circuit breaker that hands control back to you, and you can override any decision while it is being reviewed.
+- **`/rmodel`** — choose the model powering the reviewer (defaults to Nemotron 3.5 Lightning Free, falls back to your chat model). Remembered in your config as `reviewer_model`.
+- **Provider-agnostic** — bring your own models: Anthropic, OpenAI, Google, local, and 75+ providers.
+- **Client/server architecture** — run the agent headless (`autocode serve`) and drive it from anywhere.
 
 ### Installation
 
-autocode is installed from source:
+Install from source:
 
 ```bash
 git clone https://github.com/KaanAydinli/autocode.git
@@ -59,8 +36,14 @@ bun dev            # TUI
 bun dev serve      # headless server
 ```
 
-> [!NOTE]
-> The upstream installers (`curl opencode.ai/install`, `npm i -g opencode-ai`, brew, scoop, …) install the original OpenCode, not this fork.
+### Usage
+
+```bash
+autocode                       # interactive TUI
+autocode --auto                # start in the auto agent (reviewer-approved permissions)
+autocode run "fix the tests"   # non-interactive, single prompt
+autocode run --agent auto "…"  # non-interactive with the auto agent
+```
 
 ### Agents
 
@@ -69,30 +52,26 @@ autocode includes three built-in agents you can switch between with the `Tab` ke
 - **build** - Default, full-access agent for development work
 - **plan** - Read-only agent for analysis and code exploration
   - Denies file edits by default
-  - Asks permission before running bash commands
   - Ideal for exploring unfamiliar codebases or planning changes
 - **auto** - Autonomous agent for hands-off work
-  - Permission requests are approved or denied by an automated risk reviewer instead of prompting you
-  - You can still override any decision while it is being reviewed
+  - Permission requests are settled by the automated risk reviewer instead of prompting you
+  - Set the reviewer's model with `/rmodel`
 
 Also included is a **general** subagent for complex searches and multistep tasks.
 This is used internally and can be invoked using `@general` in messages.
 
-Learn more about [agents](https://opencode.ai/docs/agents).
+### Configuration
 
-### Documentation
+Configuration lives in `opencode.json` (project) and `~/.config/opencode/opencode.json` (global). Notable keys:
 
-autocode keeps full compatibility with OpenCode's configuration and features. For everything else — config, providers, keybinds, MCP servers — [**head over to the OpenCode docs**](https://opencode.ai/docs).
+- `model` — your chat model, as `provider/model`
+- `reviewer_model` — the auto agent's reviewer model
+- `permission` — per-tool `allow` / `ask` / `deny` rules, which the auto agent's reviewer settles for you
 
 ### Contributing
 
 If you're interested in contributing, please read the [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
 
-### Credits
-
-Built on top of [OpenCode](https://github.com/anomalyco/opencode) by Anomaly. Fork modifications by [Kaan Aydınlı](https://github.com/KaanAydinli).
-
 ---
 
-> [!IMPORTANT]
-> **This is not developed by the OpenCode team (Anomaly / anomalyco).** autocode is an independent community fork and is not affiliated with, endorsed by, or supported by the OpenCode project.
+Built on top of [OpenCode](https://github.com/anomalyco/opencode) by Anomaly.
