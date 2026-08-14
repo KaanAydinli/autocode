@@ -636,6 +636,26 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
         },
       },
       {
+        name: "model.reviewer",
+        title: "Switch reviewer model",
+        category: "Agent",
+        slashName: "rmodel",
+        run: () => {
+          dialog.replace(() => (
+            <DialogModel
+              title="Select reviewer model"
+              onSelect={(providerID, modelID) => {
+                const value = `${providerID}/${modelID}`
+                void sdk.client.global.config
+                  .update({ config: { reviewer_model: value } })
+                  .then(() => toast.show({ message: `Reviewer model set to ${value}`, variant: "info" }))
+                  .catch(() => toast.show({ message: "Failed to update reviewer model", variant: "error" }))
+              }}
+            />
+          ))
+        },
+      },
+      {
         name: "model.cycle_recent",
         title: "Model cycle",
         category: "Agent",

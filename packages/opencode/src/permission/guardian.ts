@@ -253,6 +253,20 @@ export function decide(result: ReviewResult): Decision {
   }
 }
 
+export const DEFAULT_REVIEWER_MODEL = "opencode/nemotron-3.5-lightning-free"
+
+// Ordered model candidates for the reviewer: the configured reviewer_model first,
+// then the built-in default. The service walks these and falls back to the session's
+// chat model when none resolve.
+export function reviewerCandidates(configured: string | undefined) {
+  const refs = [configured?.trim(), DEFAULT_REVIEWER_MODEL].filter((value): value is string => !!value)
+  const unique = Array.from(new Set(refs))
+  return unique.map((ref) => {
+    const [providerID, ...rest] = ref.split("/")
+    return { providerID: providerID ?? "", modelID: rest.join("/") }
+  })
+}
+
 export function createBreaker() {
   let consecutive = 0
   const recent: boolean[] = []

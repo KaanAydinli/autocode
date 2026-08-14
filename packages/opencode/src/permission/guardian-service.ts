@@ -1,12 +1,16 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
+import { SessionV1 } from "@opencode-ai/core/v1/session"
 import { Context, Effect, Layer, Schema, Stream } from "effect"
 import { streamText } from "ai"
 import { Guardian } from "./guardian"
 import { Permission } from "@/permission"
 import { Auth } from "@/auth"
+import { Config } from "@/config/config"
 import { Provider } from "@/provider/provider"
 import { ProviderTransform } from "@/provider/transform"
+import { ProviderV2 } from "@opencode-ai/core/provider"
+import { ModelV2 } from "@opencode-ai/core/model"
 import { Session } from "@/session/session"
 import { InstanceStore } from "@/project/instance-store"
 import { EventV2Bridge } from "@/event-v2-bridge"
@@ -36,17 +40,40 @@ const layer = Layer.effect(
     const session = yield* Session.Service
     const store = yield* InstanceStore.Service
     const auth = yield* Auth.Service
-    const breakers = new Map<string, ReturnType<typeof Guardian.createBreaker>>()
-    const reviewed = new Set<PermissionV1.ID>()
+    const config = yield* Config.Service
 
-    const assess = Effect.fn("PermissionGuardian.assess")(function* (request: PermissionV1.Request) {
-      const messages = yield* session.messages({ sessionID: SessionID.make(request.sessionID) })
+    // Configured reviewer_model, then the built-in default, then the session's chat model.
+    const reviewerModel = Effect.fn("PermissionGuardian.reviewerModel")(function* (
+      messages: readonly SessionV1.WithParts[],
+    ) {
+      const cfg = yield* config.get()
+      for (const candidate of Guardian.reviewerCandidates(cfg.reviewer_model)) {
+        const ref = {
+          providerID: ProviderV2.ID.make(candidate.providerID),
+          modelID: ModelV2.ID.make(candidate.modelID),
+        }
+        const model = yield* provider
+          .getModel(ref.providerID, ref.modelID)
+          .pipe(Effect.catchTag("ProviderModelNotFoundError", () => Effect.succeed(undefined)))
+        if (model) return { ref, model }
+      }
       const lastUser = messages.findLast((message) => message.info.role === "user")
       const ref =
         lastUser?.info.role === "user"
           ? { providerID: lastUser.info.model.providerID, modelID: lastUser.info.model.modelID }
           : yield* provider.defaultModel()
-      const model = yield* provider.getModel(ref.providerID, ref.modelID)
+      return { ref, model: yield* provider.getModel(ref.providerID, ref.modelID) }
+    })
+    const breakers = new Map<string, ReturnType<typeof Guardian.createBreaker>>()
+    const reviewed = new Set<PermissionV1.ID>()
+
+    const assess = Effect.fn("PermissionGuardian.assess")(function* (request: PermissionV1.Request) {
+      const messages = yield* session.messages({ sessionID: SessionID.make(request.sessionID) })
+      const { ref, model } = yield* reviewerModel(messages)
+      yield* Effect.logInfo("guardian reviewer model", {
+        requestID: request.id,
+        model: `${ref.providerID}/${ref.modelID}`,
+      })
       const language = yield* provider.getLanguage(model)
       const built = Guardian.prompt({
         transcript: Guardian.transcript(messages),
@@ -161,7 +188,7 @@ const layer = Layer.effect(
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [EventV2Bridge.node, Permission.node, Provider.node, Session.node, InstanceStore.node, Auth.node],
+  deps: [EventV2Bridge.node, Permission.node, Provider.node, Session.node, InstanceStore.node, Auth.node, Config.node],
 })
 
 export * as PermissionGuardian from "./guardian-service"

@@ -161,6 +161,33 @@ describe("Guardian.parse", () => {
   })
 })
 
+describe("Guardian.reviewerCandidates", () => {
+  test("defaults to nemotron 3.5 lightning free", () => {
+    expect(Guardian.reviewerCandidates(undefined)).toEqual([
+      { providerID: "opencode", modelID: "nemotron-3.5-lightning-free" },
+    ])
+  })
+
+  test("configured model comes first, default stays as fallback", () => {
+    expect(Guardian.reviewerCandidates("anthropic/claude-sonnet-5")).toEqual([
+      { providerID: "anthropic", modelID: "claude-sonnet-5" },
+      { providerID: "opencode", modelID: "nemotron-3.5-lightning-free" },
+    ])
+  })
+
+  test("configuring the default yields no duplicate", () => {
+    expect(Guardian.reviewerCandidates("opencode/nemotron-3.5-lightning-free")).toEqual([
+      { providerID: "opencode", modelID: "nemotron-3.5-lightning-free" },
+    ])
+  })
+
+  test("blank config is ignored", () => {
+    expect(Guardian.reviewerCandidates("  ")).toEqual([
+      { providerID: "opencode", modelID: "nemotron-3.5-lightning-free" },
+    ])
+  })
+})
+
 describe("Guardian.createBreaker", () => {
   test("trips after three consecutive denials", () => {
     const breaker = Guardian.createBreaker()
